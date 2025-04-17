@@ -53,51 +53,95 @@
 
 - **`GET /api/status`**: Get API status (`{ status, environment, timestamp, ... }`).
 
+## Security Features
 
-## Security Highlights
+- **Short-Lived Access Tokens:** Access tokens expire quickly (5 minutes) to limit damage if compromised.
+- **Refresh Tokens:** Long-lived tokens (30 days) allow clients to get new access tokens without re-login.
+- **HTTP-only Cookies:** Refresh tokens for web clients are in HTTP-only cookies for better protection.
+- **Rate Limiting:** Prevents abuse with limits on API requests.
+- **HTTPS:** Strongly recommended for production to encrypt all communication.
+- **Considerations for MITM Prevention:**
+    - **SSL/TLS:** Ensure proper server setup with a valid certificate.
+    - **Certificate Pinning (Android):** Instructions and helper to generate certificate hashes for client-side pinning.
+- **GZIP Compression:** While not directly a security feature, it reduces data transfer. For mobile (like Android with Retrofit), this saves bandwidth.
+- **HTTP Security Headers:** Implemented to enhance security against common web vulnerabilities.
 
-- Short access token expiry.
-- Refresh token mechanism.
-- Considerations for SSL pinning (Android).
-- Rate limiting for protection.
-- HTTP security headers.
+## Refresh Token API
+- **Dedicated /api/auth/refresh Endpoint:** This endpoint is specifically designed to issue new access tokens in exchange for a valid, non-revoked, and unexpired refresh token.
+- **Refresh Token Storage:** Refresh tokens are stored in a dedicated RefreshToken MongoDB collection, associated with the user and an expiration date (30 days).
+- **Refresh Token Revocation:** The /api/auth/logout endpoint revokes the refresh token, preventing it from being used again.
+- **HTTP-only Cookies (for Web Clients):** For web browsers, the refresh token is also set as an HTTP-only cookie. This helps protect it from client-side JavaScript access, mitigating the risk of XSS attacks. However, for non-web clients like Android, the refresh token is also sent in the response body.
+
+
+## MITM Prevention and SSL/TLS
+- **HTTPS Enforcement (Production):** In a production environment, it is crucial to deploy the API over HTTPS. This encrypts the communication between the client and the server, preventing eavesdropping and man-in-the-middle (MITM) attacks. You will need to obtain and configure a valid SSL/TLS certificate for your domain.
+- **Certificate Pinning (Android):** To further enhance security against MITM attacks, especially those involving rogue or compromised Certificate Authorities, your Android application should implement SSL certificate pinning.
+- **Backend Support:** The utils/certificatePinning.js file provides helper functions to generate SHA-256 and SHA-1 hashes of your SSL certificate.
+- **Android Implementation:** You will need to hardcode or securely deliver these certificate hashes within your Android application. During the SSL handshake, the app will verify that the server's certificate matches one of the pinned hashes.
+- **Development Endpoint (Optional):** The commented-out /api/cert-info route in utils/certificatePinning.js shows how you could expose certificate information (only in development) to aid Android developers during implementation. Do not expose this in production.
+
+## Strong Retrofit (Android) Considerations
+
+When integrating this API with an Android application using Retrofit, consider these security best practices:
+
+- **Implement SSL Certificate Pinning:** Use the certificate hashes (SHA-256 or SHA-1) to verify the server's identity and prevent MITM attacks. The backend provides tools in `utils/certificatePinning.js` to generate these hashes.
+- **Enable GZIP Compression:** Configure Retrofit to accept and decompress GZIP responses from the server to reduce bandwidth usage and improve performance.
+- **Secure Token Storage:** Store access and refresh tokens securely on the Android device (e.g., using EncryptedSharedPreferences or the Android Keystore).
+- **Implement Token Refresh Logic:** Handle access token expiry gracefully by using the refresh token endpoint to obtain new access tokens before they expire.
+- **Error Handling:** Implement robust error handling for network requests and API responses, especially for authentication failures.
+
+## Important Request Headers
+
+- **`Authorization: Bearer <accessToken>`**: Used for authenticating requests to protected routes. Replace `<accessToken>` with the actual JWT access token.
+- **`Content-Type: application/json`**: Indicates that the request body is in JSON format (required for `POST` and `PUT` requests with JSON data).
+- **`Cookie`**: For web clients, this header will automatically include cookies set by the server, such as the `refreshToken`.
+- **`x-forwarded-host`**: (Typically set by proxies) Indicates the original host requested by the client.
+- **`x-forwarded-proto`**: (Typically set by proxies) Indicates the original protocol (HTTP/HTTPS) used by the client.
+- **`x-no-compression: true`**: (Optional) Sent by the client to request an uncompressed response.
 
 ## Docs
 
 - Access Swagger UI at `/api-docs` (dev mode).
 
+## Task:
 
-Step 1: Set up a basic Node.js backend
+### STEP 1: BACKEND NODEJS
 
-Create a simple Express server with user authentication
-Set up CRUD operations for notes
-Implement proper TLS/SSL for secure connections
-Deploy locally and expose with ngrok for testing
+- Create a simple Express server with user authentication
+- Set up CRUD operations for notes
+- Implement proper TLS/SSL for secure connections
+- Deploy locally and expose with ngrok for testing
 
-Step 2: Create the Android client
+### STEP 2: ANDROID
 
-Set up a basic notes app UI
-Implement Retrofit for API communication
-Configure proper SSL/TLS handling
-Add SSL pinning to prevent MITM attacks
+- Set up a basic notes app UI
+- Implement Retrofit for API communication
+- Configure proper SSL/TLS handling
+- Add SSL pinning to prevent MITM attacks
 
-Step 3: Enhance security features
+### STEP 3: ENHANCE SECURITY FEATURES
 
-Implement token-based authentication
-Add different security configurations for debug vs release
-Configure network security config for cleartext traffic rules
-Handle certificate validation properly
+- Implement token-based authentication
+- Add different security configurations for debug vs release
+- Configure network security config for cleartext traffic rules
+- Handle certificate validation properly
 
-mkdir certificates
-cd certificates
 
-# Generate a private key
-openssl genrsa -out private-key.pem 2048
+## How to generate certificate hashes for Android SSL pinning
 
-# Generate a certificate signing request
-openssl req -new -key private-key.pem -out csr.pem
+- `mkdir certificates`
+- `cd certificates`
 
-# Generate a self-signed certificate (valid for 365 days)
-openssl x509 -req -days 365 -in csr.pem -signkey private-key.pem -out certificate.pem
+### Generate a private key
+
+`openssl genrsa -out private-key.pem 2048`
+
+### Generate a certificate signing request
+
+`openssl req -new -key private-key.pem -out csr.pem`
+
+### Generate a self-signed certificate (valid for 365 days)
+
+`openssl x509 -req -days 365 -in csr.pem -signkey private-key.pem -out certificate.pem`
 
 
