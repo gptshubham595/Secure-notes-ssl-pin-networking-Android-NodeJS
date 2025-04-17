@@ -24,13 +24,14 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import javax.inject.Named
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    const val API_BASE_URL = "http://192.168.69.188:3000"
+    const val BASE_URL = "http://192.168.69.188:3000/"
 
     @Provides
     @Singleton
@@ -79,15 +80,15 @@ object NetworkModule {
         return GzipRequestInterceptor()
     }
 
+    // Create a basic OkHttpClient without the authenticator
     @Provides
     @Singleton
-    fun provideOkHttpClient(
+    @Named("baseOkHttpClient")
+    fun provideBaseOkHttpClient(
         authInterceptor: AuthInterceptor,
         loggingInterceptor: HttpLoggingInterceptor,
         gzipInterceptor: GzipRequestInterceptor,
-        certificatePinner: CertificatePinner,
-        tokenManager: TokenManager,
-        authService: AuthApiService
+        certificatePinner: CertificatePinner
     ): OkHttpClient {
         val interceptors = listOf(
             authInterceptor,
@@ -95,10 +96,52 @@ object NetworkModule {
             gzipInterceptor
         )
 
-        val client = certificatePinner.createOkHttpClient(interceptors)
+        return certificatePinner.createOkHttpClient(interceptors)
+    }
 
-        return client.newBuilder()
-            .authenticator(TokenAuthenticator(tokenManager, authService))
+    // Create a Retrofit instance for Auth API using the base OkHttpClient
+    @Provides
+    @Singleton
+    @Named("authRetrofit")
+    fun provideAuthRetrofit(
+        @Named("baseOkHttpClient") okHttpClient: OkHttpClient,
+        gson: Gson
+    ): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create(gson))
+            .build()
+    }
+
+    // Provide AuthApiService using the dedicated Retrofit instance
+    @Provides
+    @Singleton
+    fun provideAuthApiService(
+        @Named("authRetrofit") retrofit: Retrofit
+    ): AuthApiService {
+        return retrofit.create(AuthApiService::class.java)
+    }
+
+    // Create the TokenAuthenticator with the AuthApiService
+    @Provides
+    @Singleton
+    fun provideTokenAuthenticator(
+        tokenManager: TokenManager,
+        authApiService: AuthApiService
+    ): TokenAuthenticator {
+        return TokenAuthenticator(tokenManager, authApiService)
+    }
+
+    // Now create the final OkHttpClient with the authenticator
+    @Provides
+    @Singleton
+    fun provideOkHttpClient(
+        @Named("baseOkHttpClient") baseOkHttpClient: OkHttpClient,
+        tokenAuthenticator: TokenAuthenticator
+    ): OkHttpClient {
+        return baseOkHttpClient.newBuilder()
+            .authenticator(tokenAuthenticator)
             .build()
     }
 
@@ -114,16 +157,10 @@ object NetworkModule {
     @Singleton
     fun provideRetrofit(okHttpClient: OkHttpClient, gson: Gson): Retrofit {
         return Retrofit.Builder()
-            .baseUrl(API_BASE_URL)
+            .baseUrl(BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
-    }
-
-    @Provides
-    @Singleton
-    fun provideAuthApiService(retrofit: Retrofit): AuthApiService {
-        return retrofit.create(AuthApiService::class.java)
     }
 
     @Provides
