@@ -129,19 +129,31 @@ When integrating this API with an Android application using Retrofit, consider t
 
 ## How to generate certificate hashes for Android SSL pinning
 
-- `mkdir certificates`
-- `cd certificates`
+```bash
+mkdir certificates
+cd certificates
+```
 
 ### Generate a private key
 
-`openssl genrsa -out private-key.pem 2048`
+```bash
+openssl genrsa -out private-key.pem 2048
+```
 
 ### Generate a certificate signing request
 
-`openssl req -new -key private-key.pem -out csr.pem`
+```bash
+openssl req -new -key private-key.pem -out csr.pem
+```
 
 ### Generate a self-signed certificate (valid for 365 days)
 
-`openssl x509 -req -days 365 -in csr.pem -signkey private-key.pem -out certificate.pem`
+```bash
+openssl x509 -req -days 365 -in csr.pem -signkey private-key.pem -out certificate.pem
+```
 
+### Get the SHA-256 and SHA-1 hashes of the certificate
 
+```bash
+openssl x509 -in certificates/certificate.pem -fingerprint -sha256 | sed 's/SHA256 Fingerprint=//' | xxd -r -p | openssl base64
+```

@@ -8,6 +8,7 @@ const swaggerUI = require('swagger-ui-express');
 const swaggerSpec = require('./swagger');
 const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
+const os = require('os');
 
 // Import middleware
 const compression = require('./middleware/compression');
@@ -58,6 +59,31 @@ if (process.env.NODE_ENV === 'development') {
 
 // Swagger documentation
 app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerSpec));
+
+
+function getLocalIP() {
+    const networkInterfaces = os.networkInterfaces();
+    for (const interfaceName in networkInterfaces) {
+      for (const iface of networkInterfaces[interfaceName]) {
+        // Skip over internal (i.e. 127.0.0.1) and non-IPv4 addresses
+        if (iface.family === 'IPv4' && !iface.internal) {
+          return iface.address;
+        }
+      }
+    }
+    return '127.0.0.1';
+  }
+
+
+app.get('/api/ip', (req, res) => {
+    try {
+      const ip = getLocalIP();
+      res.send(ip);
+    } catch (error) {
+      console.error('Error:', error);
+      res.status(500).json({ error: 'Failed', details: error.message });
+    }
+  });
 
 // API Status endpoint
 app.get('/api/status', (req, res) => {

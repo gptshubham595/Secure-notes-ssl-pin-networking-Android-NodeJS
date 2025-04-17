@@ -5,4 +5,5 @@ plugins {
     alias(libs.plugins.hilt.android.plugin) apply false
     alias(libs.plugins.navgraph.safearg.plugin) apply false
     alias(libs.plugins.ksp.plugin) apply false
+    alias(libs.plugins.kotlin.compose) apply false
 }
