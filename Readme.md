@@ -16,7 +16,7 @@
 
 ## Setup
 
-1. **Clone:** `git clone <repo_url>`
+1. **Clone:** `git clone https://github.com/gptshubham595/Secure-notes-ssl-pin-networking-Android-NodeJS`
 2. **Install:** `npm install` or `yarn install`
 3. **`.env`:** Configure `MONGO_URI`, `JWT_SECRET`, etc.
 4. **Run Dev:** `npm run dev`
