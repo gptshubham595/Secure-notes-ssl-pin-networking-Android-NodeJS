@@ -39,12 +39,12 @@ fun CreateNoteScreen(
     onBackClick: () -> Unit,
     viewModel: NotesViewModel = hiltViewModel()
 ) {
-    var title = remember { mutableStateOf("") }
-    var content = remember { mutableStateOf("") }
+    val title = remember { mutableStateOf("") }
+    val content = remember { mutableStateOf("") }
     val noteActionState = viewModel.noteActionState.collectAsState()
 
     // Navigate when note is created successfully
-    LaunchedEffect(noteActionState) {
+    LaunchedEffect(noteActionState.value) {
         if (noteActionState.value is NoteActionState.Success) {
             onNoteCreated()
         }

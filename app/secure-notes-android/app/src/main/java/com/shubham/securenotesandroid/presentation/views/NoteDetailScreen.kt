@@ -89,7 +89,7 @@ fun NoteDetailScreen(
                 }
 
                 is NoteDetailState.Success -> {
-                    val note = (noteDetailState as NoteDetailState.Success).note
+                    val note = (noteDetailState.value as NoteDetailState.Success).note
 
                     Column(
                         modifier = Modifier
@@ -136,7 +136,7 @@ fun NoteDetailScreen(
                         )
 
                         Text(
-                            text = (noteDetailState as NoteDetailState.Error).message,
+                            text = (noteDetailState.value as NoteDetailState.Error).message,
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.error,
                             modifier = Modifier.padding(top = 16.dp)

@@ -44,12 +44,12 @@ fun LoginScreen(
     val authState = viewModel.authState.collectAsState()
     val userState = viewModel.userState.collectAsState()
 
-    var email = remember { mutableStateOf("") }
-    var password = remember { mutableStateOf("") }
-    var isPasswordVisible = remember { mutableStateOf(false) }
+    val email = remember { mutableStateOf("") }
+    val password = remember { mutableStateOf("") }
+    val isPasswordVisible = remember { mutableStateOf(false) }
 
     // Check for successful login
-    LaunchedEffect(authState, userState) {
+    LaunchedEffect(authState.value, userState.value) {
         if (authState.value is AuthState.Success &&
             userState.value is UserState.LoggedIn
         ) {

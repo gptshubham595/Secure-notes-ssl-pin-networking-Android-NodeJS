@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.shubham.securenotesandroid.presentation.models.AuthState
@@ -45,14 +46,14 @@ fun RegisterScreen(
     val authState = viewModel.authState.collectAsState()
     val userState = viewModel.userState.collectAsState()
 
-    var email = remember { mutableStateOf("") }
-    var password = remember { mutableStateOf("") }
-    var confirmPassword = remember { mutableStateOf("") }
-    var isPasswordVisible = remember { mutableStateOf(false) }
-    var isConfirmPasswordVisible = remember { mutableStateOf(false) }
+    val email = remember { mutableStateOf("") }
+    val password = remember { mutableStateOf("") }
+    val confirmPassword = remember { mutableStateOf("") }
+    val isPasswordVisible = remember { mutableStateOf(false) }
+    val isConfirmPasswordVisible = remember { mutableStateOf(false) }
 
     // Validation state
-    val passwordsMatch = password == confirmPassword
+    val isPasswordMatching = password.value == confirmPassword.value
     val isValidEmail = email.value.contains("@") && email.value.contains(".")
     val isValidPassword = password.value.length >= 6
 
@@ -128,9 +129,9 @@ fun RegisterScreen(
             visualTransformation = if (isConfirmPasswordVisible.value) VisualTransformation.None else PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             singleLine = true,
-            isError = confirmPassword.value.isNotEmpty() && !passwordsMatch,
+            isError = !isPasswordMatching, // Use the new state here
             supportingText = {
-                if (confirmPassword.value.isNotEmpty() && !passwordsMatch) {
+                if (!isPasswordMatching) {
                     Text("Passwords don't match")
                 }
             },
@@ -150,10 +151,15 @@ fun RegisterScreen(
         )
 
         Button(
-            onClick = { viewModel.register(email.value, password.value) },
+            onClick = {
+                // Perform password matching here, before calling register
+                if (isPasswordMatching) {
+                    viewModel.register(email.value, password.value)
+                }
+            },
             enabled = email.value.isNotEmpty() && isValidEmail &&
                     password.value.isNotEmpty() && isValidPassword &&
-                    passwordsMatch && authState.value !is AuthState.Loading,
+                    authState.value !is AuthState.Loading,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp)
@@ -178,11 +184,20 @@ fun RegisterScreen(
         // Error message
         if (authState.value is AuthState.Error) {
             Text(
-                text = (authState as AuthState.Error).message,
+                text = (authState.value as AuthState.Error).message,
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(top = 16.dp)
             )
         }
     }
+}
+
+@Preview
+@Composable
+fun RegisterScreenPreview() {
+    RegisterScreen(
+        onNavigateToLogin = {},
+        onRegisterSuccess = {}
+    )
 }

@@ -18,7 +18,7 @@ exports.getNote = async (req, res) => {
     
     // Check if note exists
     if (!note) {
-      return res.status(404).json({ msg: 'Note not found' });
+        return res.status(404).json({ msg: 'Note not found' });
     }
     
     // Make sure user owns the note

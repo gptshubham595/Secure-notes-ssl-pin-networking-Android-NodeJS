@@ -1,5 +1,6 @@
 package com.shubham.securenotesandroid.presentation.navigation
 
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
@@ -38,6 +39,7 @@ fun AppNavHost(
             LoginScreen(
                 onNavigateToRegister = { navController.navigate(Screen.Register.route) },
                 onLoginSuccess = {
+                    Log.d("AppNavHost", "Login successful, navigating to NotesList")
                     navController.navigate(Screen.NotesList.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }

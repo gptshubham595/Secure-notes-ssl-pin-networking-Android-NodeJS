@@ -1,7 +1,22 @@
 // scripts/ngrokHelper.js
 const fs = require('fs');
+const dotenv = require('dotenv');
 const path = require('path');
 const axios = require('axios');
+const os = require('os');
+
+function getLocalIP() {
+  const networkInterfaces = os.networkInterfaces();
+  for (const interfaceName in networkInterfaces) {
+      for (const iface of networkInterfaces[interfaceName]) {
+          // Skip over internal (i.e. 127.0.0.1) and non-IPv4 addresses
+          if (iface.family === 'IPv4' && !iface.internal) {
+              return iface.address;
+          }
+      }
+  }
+  return '127.0.0.1';
+}
 
 // Try to get ngrok url from the API
 async function detectNgrokUrl() {
@@ -11,6 +26,7 @@ async function detectNgrokUrl() {
 
     for (const tunnel of tunnels) {
       if (tunnel.proto === 'https') {
+        process.env.NGROK_URL = tunnel.public_url;
         return tunnel.public_url;
       }
     }
@@ -53,4 +69,4 @@ if (require.main === module) {
   logNgrokUrl();
 }
 
-module.exports = { detectNgrokUrl, logNgrokUrl };
+module.exports = { getLocalIP, detectNgrokUrl, logNgrokUrl };

@@ -9,7 +9,6 @@ import com.shubham.securenotesandroid.core.data.network.TokenManager
 import com.shubham.securenotesandroid.core.domain.models.LoginResponseEntity
 import com.shubham.securenotesandroid.core.domain.models.LogoutResponseEntity
 import com.shubham.securenotesandroid.core.domain.models.RefreshTokenResponseEntity
-import com.shubham.securenotesandroid.core.domain.models.RegisterResponseEntity
 import com.shubham.securenotesandroid.core.domain.models.UserResponseEntity
 import com.shubham.securenotesandroid.core.domain.repositories.AuthRepository
 import com.shubham.securenotesandroid.core.mappers.toDomain
@@ -20,7 +19,7 @@ class AuthRepositoryImpl @Inject constructor(
     private val tokenManager: TokenManager
 ) : AuthRepository {
 
-    override suspend fun register(email: String, password: String): Result<RegisterResponseEntity> {
+    override suspend fun register(email: String, password: String): Result<LoginResponseEntity> {
         return try {
             val response = authApiService.register(RegisterRequest(email, password))
             tokenManager.saveAccessToken(response.accessToken)

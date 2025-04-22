@@ -52,9 +52,9 @@ fun EditNoteScreen(
     val noteDetailState = viewModel.noteDetailState.collectAsState()
     val noteActionState = viewModel.noteActionState.collectAsState()
 
-    var title = remember { mutableStateOf("") }
-    var content = remember { mutableStateOf("") }
-    var isDeleteDialogVisible = remember { mutableStateOf(false) }
+    val title = remember { mutableStateOf("") }
+    val content = remember { mutableStateOf("") }
+    val isDeleteDialogVisible = remember { mutableStateOf(false) }
 
     // Load note details when screen is launched
     LaunchedEffect(noteId) {
@@ -62,7 +62,7 @@ fun EditNoteScreen(
     }
 
     // Update local state when note is loaded
-    LaunchedEffect(noteDetailState) {
+    LaunchedEffect(noteDetailState.value) {
         if (noteDetailState.value is NoteDetailState.Success) {
             val note = (noteDetailState.value as NoteDetailState.Success).note
             title.value = note.title
@@ -71,7 +71,7 @@ fun EditNoteScreen(
     }
 
     // Navigate when note is updated successfully
-    LaunchedEffect(noteActionState) {
+    LaunchedEffect(noteActionState.value) {
         if (noteActionState.value is NoteActionState.Success) {
             onNoteUpdated()
         }

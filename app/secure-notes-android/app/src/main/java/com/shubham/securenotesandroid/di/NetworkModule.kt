@@ -11,7 +11,6 @@ import com.shubham.securenotesandroid.BuildConfig
 import com.shubham.securenotesandroid.core.data.network.AuthApiService
 import com.shubham.securenotesandroid.core.data.network.AuthInterceptor
 import com.shubham.securenotesandroid.core.data.network.CertificatePinner
-import com.shubham.securenotesandroid.core.data.network.GzipRequestInterceptor
 import com.shubham.securenotesandroid.core.data.network.NoteApiService
 import com.shubham.securenotesandroid.core.data.network.TokenAuthenticator
 import com.shubham.securenotesandroid.core.data.network.TokenManager
@@ -31,7 +30,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    const val BASE_URL = "http://192.168.69.188:3000/"
+    const val BASE_URL = "https://c691-123-63-206-73.ngrok-free.app"
 
     @Provides
     @Singleton
@@ -74,11 +73,6 @@ object NetworkModule {
         }
     }
 
-    @Provides
-    @Singleton
-    fun provideGzipInterceptor(): GzipRequestInterceptor {
-        return GzipRequestInterceptor()
-    }
 
     // Create a basic OkHttpClient without the authenticator
     @Provides
@@ -87,13 +81,11 @@ object NetworkModule {
     fun provideBaseOkHttpClient(
         authInterceptor: AuthInterceptor,
         loggingInterceptor: HttpLoggingInterceptor,
-        gzipInterceptor: GzipRequestInterceptor,
         certificatePinner: CertificatePinner
     ): OkHttpClient {
         val interceptors = listOf(
             authInterceptor,
             loggingInterceptor,
-            gzipInterceptor
         )
 
         return certificatePinner.createOkHttpClient(interceptors)

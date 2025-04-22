@@ -8,7 +8,6 @@ import com.shubham.securenotesandroid.core.data.models.UserResponse
 import com.shubham.securenotesandroid.core.domain.models.LoginResponseEntity
 import com.shubham.securenotesandroid.core.domain.models.LogoutResponseEntity
 import com.shubham.securenotesandroid.core.domain.models.RefreshTokenResponseEntity
-import com.shubham.securenotesandroid.core.domain.models.RegisterResponseEntity
 import com.shubham.securenotesandroid.core.domain.models.UserResponseEntity
 
 fun LoginResponse.toDomain() = LoginResponseEntity(
@@ -17,11 +16,12 @@ fun LoginResponse.toDomain() = LoginResponseEntity(
     expiresIn = expiresIn,
 )
 
-fun RegisterResponse.toDomain() = RegisterResponseEntity(
+fun RegisterResponse.toDomain() = LoginResponseEntity(
     accessToken = accessToken,
     refreshToken = refreshToken,
     expiresIn = expiresIn,
 )
+
 
 fun UserResponse.toDomain() = UserResponseEntity(
     _id = _id,

@@ -1,5 +1,6 @@
 package com.shubham.securenotesandroid.core.data.network
 
+import okhttp3.CertificatePinner
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
@@ -17,15 +18,21 @@ class CertificatePinner @Inject constructor() {
             readTimeout(30, TimeUnit.SECONDS)
             writeTimeout(30, TimeUnit.SECONDS)
 
-            // Certificate pinning
-            certificatePinner(
-                okhttp3.CertificatePinner.Builder()
-                    .add(
-                        "192.168.69.188", // Replace with your actual hostname when moving to production
-                        "sha256/ola+zKAlqr0M8j7FEUTUEn1cO6Gqx0uk3A==" // Replace with your actual certificate hash
-                    )
+            val sslShaKeySecretRoot = "sha256/WmFszXEkOr5J5Bj1JmvmKNU/lwpuxMNxjy0qPQilvYk="
+            val pins = listOf(
+//                sslShaKeySecretOldRoot.toString(),
+                sslShaKeySecretRoot,
+            ).toTypedArray()
+
+            val sslPattern = "*.ngrok-free.app"
+
+            if (sslPattern != null) {
+                // Certificate pinning
+                val certificatePinner = CertificatePinner.Builder()
+                    .add(sslPattern, *pins)
                     .build()
-            )
+                certificatePinner(certificatePinner)
+            }
         }.build()
     }
 }

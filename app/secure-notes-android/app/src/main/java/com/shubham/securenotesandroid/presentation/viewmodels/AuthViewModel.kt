@@ -2,10 +2,12 @@ package com.shubham.securenotesandroid.presentation.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.shubham.securenotesandroid.core.domain.models.LoginResponseEntity
 import com.shubham.securenotesandroid.core.domain.repositories.AuthRepository
 import com.shubham.securenotesandroid.presentation.models.AuthState
 import com.shubham.securenotesandroid.presentation.models.UserState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,8 +19,9 @@ class AuthViewModel @Inject constructor(
     private val authRepository: AuthRepository
 ) : ViewModel() {
 
-    private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
-    val authState: StateFlow<AuthState> = _authState.asStateFlow()
+    private val _authState =
+        MutableStateFlow<AuthState<LoginResponseEntity, String>>(AuthState.Idle)
+    val authState: StateFlow<AuthState<LoginResponseEntity, String>> = _authState.asStateFlow()
 
     private val _userState = MutableStateFlow<UserState>(UserState.Loading)
     val userState: StateFlow<UserState> = _userState.asStateFlow()
@@ -33,37 +36,40 @@ class AuthViewModel @Inject constructor(
     }
 
     fun login(email: String, password: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             _authState.value = AuthState.Loading
 
             val result = authRepository.login(email, password)
 
-            _authState.value = if (result.isSuccess) {
+            result.onSuccess { it: LoginResponseEntity ->
                 loadUserInfo()
-                AuthState.Success
-            } else {
-                AuthState.Error(result.exceptionOrNull()?.message ?: "Login failed")
+                _authState.value = AuthState.Success(it)
+            }.onFailure {
+                _authState.value =
+                    AuthState.Error(result.exceptionOrNull()?.message ?: "Login failed")
             }
         }
     }
 
     fun register(email: String, password: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             _authState.value = AuthState.Loading
 
             val result = authRepository.register(email, password)
-
-            _authState.value = if (result.isSuccess) {
+            // Handle the result of the registration
+            result.onSuccess { it: LoginResponseEntity ->
                 loadUserInfo()
-                AuthState.Success
-            } else {
-                AuthState.Error(result.exceptionOrNull()?.message ?: "Registration failed")
+                _authState.value = AuthState.Success(it)
+            }.onFailure {
+                // Handle the error
+                _authState.value =
+                    AuthState.Error(result.exceptionOrNull()?.message ?: "Registration failed")
             }
         }
     }
 
     fun logout() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             _authState.value = AuthState.Loading
 
             val result = authRepository.logout()
@@ -76,15 +82,15 @@ class AuthViewModel @Inject constructor(
     }
 
     private fun loadUserInfo() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             _userState.value = UserState.Loading
 
             val result = authRepository.getCurrentUser()
-
-            _userState.value = if (result.isSuccess) {
-                UserState.LoggedIn(result.getOrNull()!!)
-            } else {
-                UserState.Error(result.exceptionOrNull()?.message ?: "Failed to load user")
+            result.onSuccess {
+                _userState.value = UserState.LoggedIn(it)
+            }.onFailure {
+                _userState.value =
+                    UserState.Error(result.exceptionOrNull()?.message ?: "Failed to load user")
             }
         }
     }
